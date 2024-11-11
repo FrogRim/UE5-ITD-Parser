@@ -1,4 +1,4 @@
-# Unreal Engine5 ITB Parser
+# Unreal Engine5 ITD Parser
 
 # Step 1. 설치 및 테스트 빌드
 
@@ -93,24 +93,24 @@
 
 # Step 3. 소스 코드 수정 및 빌드
 
-**ITBImporter 플러그인 클래스 → 보다 유동적인 사용과 실전적용을 위해**
+**ITDImporter 플러그인 클래스 → 보다 유동적인 사용과 실전적용을 위해**
 
 <aside>
 💡
 
-Unreal Engine 5 플러그인 개발을 위해 작성된 **ITBImporter** 플러그인의 세 가지 주요 클래스를 설명합니다: **ITBParser**, **ITBImporter**, **ITBImporterFactory**. 각 클래스는 서로 명확한 역할을 가지며, 파싱된 데이터를 Unreal Engine에서 사용 가능한 지오메트리로 변환하고 임포트하는 과정을 구성합니다.
+Unreal Engine 5 플러그인 개발을 위해 작성된 **ITDImporter** 플러그인의 세 가지 주요 클래스를 설명합니다: **ITDParser**, **ITDImporter**, **ITDImporterFactory**. 각 클래스는 서로 명확한 역할을 가지며, 파싱된 데이터를 Unreal Engine에서 사용 가능한 지오메트리로 변환하고 임포트하는 과정을 구성합니다.
 
 </aside>
 
 ---
 
-## **1. ITBParser**
+## **1. ITDParser**
 
-**역할:** `.itb` 파일을 파싱하여 지오메트리 데이터를 추출하는 클래스입니다. 파일을 읽고, 텍스트를 파싱하며, 버텍스, 노멀, 폴리곤 정보를 추출하는 일을 합니다.
+**역할:** `.ITD` 파일을 파싱하여 지오메트리 데이터를 추출하는 클래스입니다. 파일을 읽고, 텍스트를 파싱하며, 버텍스, 노멀, 폴리곤 정보를 추출하는 일을 합니다.
 
 **주요 기능:**
 
-- `.itb` 파일의 내용을 읽고 파싱합니다.
+- `.ITD` 파일의 내용을 읽고 파싱합니다.
 - 파일 내에서 객체, 버텍스, 폴리곤 등의 정보를 추출합니다.
 - 파싱된 결과를 다른 클래스에서 사용할 수 있도록 제공하는 역할을 합니다.
 
@@ -122,76 +122,76 @@ Unreal Engine 5 플러그인 개발을 위해 작성된 **ITBImporter** 플러�
 
 ---
 
-## **2. ITBImporter**
+## **2. ITDImporter**
 
-**역할:** `ITBParser`를 사용하여 파싱된 데이터를 바탕으로 Unreal Engine에서 사용할 수 있는 지오메트리를 생성합니다. `FMeshDescription`을 사용하여 `UStaticMesh`를 생성하며, StaticMesh 에셋을 Unreal Engine 에디터에 등록합니다.
+**역할:** `ITDParser`를 사용하여 파싱된 데이터를 바탕으로 Unreal Engine에서 사용할 수 있는 지오메트리를 생성합니다. `FMeshDescription`을 사용하여 `UStaticMesh`를 생성하며, StaticMesh 에셋을 Unreal Engine 에디터에 등록합니다.
 
 **주요 기능:**
 
-- **ITBParser**를 사용하여 `.itb` 파일을 파싱하고, 그 결과로부터 폴리곤과 버텍스 정보를 가져옵니다.
+- **ITDParser**를 사용하여 `.ITD` 파일을 파싱하고, 그 결과로부터 폴리곤과 버텍스 정보를 가져옵니다.
 - `FMeshDescription`을 생성하고 버텍스, 버텍스 인스턴스, 폴리곤 등을 설정합니다.
 - **StaticMesh**를 생성하고 MeshDescription을 적용하여 최종적으로 에셋으로 빌드하고 Unreal Engine 에디터에 등록합니다.
 
 **코드 주요 부분:**
 
-- `ImportITB(const FString& FilePath, const FString& MeshName, UObject* InParent, EObjectFlags Flags)`: `.itb` 파일을 파싱하고, 파싱된 데이터를 기반으로 StaticMesh를 생성하는 함수입니다.
+- `ImportITD(const FString& FilePath, const FString& MeshName, UObject* InParent, EObjectFlags Flags)`: `.ITD` 파일을 파싱하고, 파싱된 데이터를 기반으로 StaticMesh를 생성하는 함수입니다.
 - `FMeshDescription`과 `FStaticMeshAttributes`를 사용하여 버텍스 포지션 및 노멀을 설정합니다.
 - `CreateMeshDescription()` 및 `CommitMeshDescription()`을 사용하여 StaticMesh에 MeshDescription을 적용하고 빌드합니다.
 
 ---
 
-## **3. ITBImporterFactory**
+## **3. ITDImporterFactory**
 
-**역할:** Unreal Engine의 **UFactory**를 상속하여 `.itb` 파일을 Unreal Engine 에디터에서 임포트할 수 있는 팩토리를 구현합니다. 에디터에서 파일을 임포트할 때 사용됩니다.
+**역할:** Unreal Engine의 **UFactory**를 상속하여 `.ITD` 파일을 Unreal Engine 에디터에서 임포트할 수 있는 팩토리를 구현합니다. 에디터에서 파일을 임포트할 때 사용됩니다.
 
 **주요 기능:**
 
-- **UFactory**를 상속하여 Unreal Engine 에디터에서 `.itb` 파일을 임포트할 수 있도록 합니다.
-- `FactoryCreateFile()` 메서드를 구현하여 **ITBImporter**를 사용해 `.itb` 파일을 파싱하고, StaticMesh를 생성하여 에디터에 등록합니다.
+- **UFactory**를 상속하여 Unreal Engine 에디터에서 `.ITD` 파일을 임포트할 수 있도록 합니다.
+- `FactoryCreateFile()` 메서드를 구현하여 **ITDImporter**를 사용해 `.ITD` 파일을 파싱하고, StaticMesh를 생성하여 에디터에 등록합니다.
 - **에셋 등록 및 로깅**: 성공 여부를 로깅하고 에셋을 등록하여 임포트된 결과를 에디터에서 사용할 수 있도록 합니다.
 
 **코드 주요 부분:**
 
-- `UITBImporterFactory()`: 팩토리 클래스의 생성자. 임포트 가능한 파일 형식 및 지원하는 클래스 설정을 담당합니다.
-- `FactoryCreateFile()`: `.itb` 파일을 임포트하는 핵심 메서드로, **ITBImporter**를 호출하여 StaticMesh를 생성합니다.
+- `UITDImporterFactory()`: 팩토리 클래스의 생성자. 임포트 가능한 파일 형식 및 지원하는 클래스 설정을 담당합니다.
+- `FactoryCreateFile()`: `.ITD` 파일을 임포트하는 핵심 메서드로, **ITDImporter**를 호출하여 StaticMesh를 생성합니다.
 - 임포트 후 성공 메시지 또는 에러 메시지를 출력하여 사용자에게 결과를 알립니다.
 
 ---
 
 ## **전체적인 흐름**
 
-1. **ITBImporterFactory**
-    - Unreal Engine의 `UFactory`를 상속하여 `.itb` 파일을 임포트할 수 있는 팩토리 클래스입니다.
-    - 에디터에서 사용자가 `.itb` 파일을 임포트하면 `FactoryCreateFile()` 메서드가 호출됩니다.
-    - 이 메서드에서 **ITBImporter**의 `ImportITB()` 함수를 호출하여 실제 임포트를 수행합니다.
-2. **ITBImporter**
-    - **ITBParser**를 사용하여 `.itb` 파일을 파싱합니다.
+1. **ITDImporterFactory**
+    - Unreal Engine의 `UFactory`를 상속하여 `.ITD` 파일을 임포트할 수 있는 팩토리 클래스입니다.
+    - 에디터에서 사용자가 `.ITD` 파일을 임포트하면 `FactoryCreateFile()` 메서드가 호출됩니다.
+    - 이 메서드에서 **ITDImporter**의 `ImportITD()` 함수를 호출하여 실제 임포트를 수행합니다.
+2. **ITDImporter**
+    - **ITDParser**를 사용하여 `.ITD` 파일을 파싱합니다.
     - 파싱된 데이터를 기반으로 `FMeshDescription`을 생성하고, 버텍스와 폴리곤 정보를 설정합니다.
     - `CreateMeshDescription()`과 `CommitMeshDescription()`을 사용하여 `UStaticMesh`에 `MeshDescription`을 적용합니다.
     - StaticMesh를 빌드하고 에셋으로 등록합니다.
-3. **ITBParser**
-    - `.itb` 파일을 읽고 파싱하여 버텍스, 노멀, 폴리곤 데이터를 추출합니다.
-    - 파싱된 데이터를 **ITBImporter**에서 사용할 수 있도록 제공합니다.
+3. **ITDParser**
+    - `.ITD` 파일을 읽고 파싱하여 버텍스, 노멀, 폴리곤 데이터를 추출합니다.
+    - 파싱된 데이터를 **ITDImporter**에서 사용할 수 있도록 제공합니다.
 
 ---
 
 ## 플로우차트
 
-- **사용자**가 에디터에서 `.itb` 파일을 임포트합니다.
+- **사용자**가 에디터에서 `.ITD` 파일을 임포트합니다.
     - ↓
-- **ITBImporterFactory**의 `FactoryCreateFile()` 메서드가 호출됩니다.
+- **ITDImporterFactory**의 `FactoryCreateFile()` 메서드가 호출됩니다.
     - ↓
-- **ITBImporterFactory**는 **ITBImporter**의 `ImportITB()` 함수를 호출합니다.
+- **ITDImporterFactory**는 **ITDImporter**의 `ImportITD()` 함수를 호출합니다.
     - ↓
-- **ITBImporter**는 **ITBParser**를 생성하고 `ParseFile()`을 호출하여 파일을 파싱합니다.
+- **ITDImporter**는 **ITDParser**를 생성하고 `ParseFile()`을 호출하여 파일을 파싱합니다.
     - ↓
-- **ITBParser**는 `.itb` 파일을 파싱하고 데이터를 추출합니다.
+- **ITDParser**는 `.ITD` 파일을 파싱하고 데이터를 추출합니다.
     - ↓
-- **ITBImporter**는 파싱된 데이터를 사용하여 `FMeshDescription`을 생성하고 StaticMesh를 빌드합니다.
+- **ITDImporter**는 파싱된 데이터를 사용하여 `FMeshDescription`을 생성하고 StaticMesh를 빌드합니다.
     - ↓
-- **ITBImporter**는 생성된 StaticMesh를 반환하고, 에셋으로 등록합니다.
+- **ITDImporter**는 생성된 StaticMesh를 반환하고, 에셋으로 등록합니다.
     - ↓
-- **ITBImporterFactory**는 임포트된 StaticMesh를 에디터에 표시합니다.
+- **ITDImporterFactory**는 임포트된 StaticMesh를 에디터에 표시합니다.
 
 ---
 
@@ -201,7 +201,7 @@ Unreal Engine 5 플러그인 개발을 위해 작성된 **ITBImporter** 플러�
 - **메모리 관리**: Unreal Engine의 가비지 컬렉션 시스템을 고려하여 UObject 파생 클래스를 `NewObject<>()`를 사용하여 생성합니다.
 - **코딩 컨벤션 준수**: Unreal Engine의 코딩 스타일을 따르도록 클래스명, 함수명, 변수명이 설정되어 있습니다.
 
-이 세 가지 클래스를 이용해 ITBImporter 플러그인은 `.itb` 파일을 파싱하여 Unreal Engine 에셋으로 임포트하는 기능을 제공합니다. 이를 통해 `.itb` 형식의 모델 데이터를 UE5 환경에서 사용할 수 있습니다.
+이 세 가지 클래스를 이용해 ITDImporter 플러그인은 `.ITD` 파일을 파싱하여 Unreal Engine 에셋으로 임포트하는 기능을 제공합니다. 이를 통해 `.ITD` 형식의 모델 데이터를 UE5 환경에서 사용할 수 있습니다.
 
 ---
 
@@ -209,20 +209,20 @@ Unreal Engine 5 플러그인 개발을 위해 작성된 **ITBImporter** 플러�
 
 ```vbnet
 YourProject/
-├── ITB_Loader/                -> my project 
-│   └── ITBImporter/
-│       ├── ITBImporter.uplugin
+├── ITD_Loader/                -> my project 
+│   └── ITDImporter/
+│       ├── ITDImporter.uplugin
 │       ├── Source/
-│       │   └── ITBImporter/
-│       │       ├── ITBImporter.Build.cs
+│       │   └── ITDImporter/
+│       │       ├── ITDImporter.Build.cs
 │       │       ├── Public/
-│       │       │   ├── ITBImporterFactory.h
-│       │       │   ├── ITBImporter.h
-│       │       │   └── ITBParser.h
+│       │       │   ├── ITDImporterFactory.h
+│       │       │   ├── ITDImporter.h
+│       │       │   └── ITDParser.h
 │       │       └── Private/
-│       │           ├── ITBImporterFactory.cpp
-│       │           ├── ITBImporter.cpp
-│       │           └── ITBParser.cpp
+│       │           ├── ITDImporterFactory.cpp
+│       │           ├── ITDImporter.cpp
+│       │           └── ITDParser.cpp
 │       └── Resources/
 │           └── Icon,Resource etc..
 
