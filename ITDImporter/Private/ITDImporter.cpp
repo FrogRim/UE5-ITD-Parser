@@ -12,14 +12,14 @@
 
 
 UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& MeshName, UObject* InParent, EObjectFlags Flags) {
-    // ITDParserë¥¼ ì‚¬ìš©í•˜ì—¬ íŒŒì¼ íŒŒì‹±
+    // ITDParser¸¦ »ç¿ëÇÏ¿© ÆÄÀÏ ÆÄ½Ì
     UITDParser* Parser = NewObject<UITDParser>(InParent);
     if (!Parser) {
         UE_LOG(LogTemp, Error, TEXT("Failed to create ITDParser object"));
         return nullptr;
     }
 
-    // ITD íŒŒì¼ íŒŒì‹±
+    // ITD ÆÄÀÏ ÆÄ½Ì
     if (!Parser->ParseFile(FilePath)) {
         UE_LOG(LogTemp, Error, TEXT("Failed to parse ITD file: %s"), *FilePath);
         return nullptr;
@@ -28,51 +28,51 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
         UE_LOG(LogTemp, Warning, TEXT("My ITD file: %s"), *FilePath);
     }
 
-    // StaticMesh ìƒì„±
+    // StaticMesh »ı¼º
     UStaticMesh* StaticMesh = NewObject<UStaticMesh>(InParent, *MeshName, Flags);
     if (!StaticMesh) {
         UE_LOG(LogTemp, Error, TEXT("Failed to create StaticMesh object"));
-        Parser->RemoveFromRoot(); // StaticMesh ìƒì„± ì‹¤íŒ¨ ì‹œ í•´ì œ
+        Parser->RemoveFromRoot(); // StaticMesh »ı¼º ½ÇÆĞ ½Ã ÇØÁ¦
         return nullptr;
     }
 
-    // StaticMesh ì„¤ì •
+    // StaticMesh ¼³Á¤
     FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
     SourceModel.BuildSettings.bRecomputeNormals = false;
     SourceModel.BuildSettings.bRecomputeTangents = false;
 
-    // MeshDescription ìƒì„± ë° ì„¤ì •
+    // MeshDescription »ı¼º ¹× ¼³Á¤
     FMeshDescription* MeshDesc = StaticMesh->CreateMeshDescription(0);
     if (!MeshDesc) {
         UE_LOG(LogTemp, Error, TEXT("Failed to create MeshDescription for StaticMesh."));
-        Parser->RemoveFromRoot(); // MeshDescription ìƒì„± ì‹¤íŒ¨ ì‹œ í•´ì œ
+        Parser->RemoveFromRoot(); // MeshDescription »ı¼º ½ÇÆĞ ½Ã ÇØÁ¦
         return nullptr;
     }
 
-    // MeshDescription ì´ˆê¸°í™”
+    // MeshDescription ÃÊ±âÈ­
     *MeshDesc = FMeshDescription();
 
-    // ì–´íŠ¸ë¦¬ë·°íŠ¸ ë“±ë¡ ë° ì´ˆê¸°í™”
+    // ¾îÆ®¸®ºäÆ® µî·Ï ¹× ÃÊ±âÈ­
     FStaticMeshAttributes MeshAttributes(*MeshDesc);
     MeshAttributes.Register();
 
-    // ì–´íŠ¸ë¦¬ë·°íŠ¸ ì°¸ì¡° ìƒì„± (ë²„í…ìŠ¤, ë²„í…ìŠ¤ ì¸ìŠ¤í„´ìŠ¤, í´ë¦¬ê³¤ ê·¸ë£¹)
+    // ¾îÆ®¸®ºäÆ® ÂüÁ¶ »ı¼º (¹öÅØ½º, ¹öÅØ½º ÀÎ½ºÅÏ½º, Æú¸®°ï ±×·ì)
     TVertexAttributesRef<FVector3f> VertexPositions = MeshAttributes.GetVertexPositions();
     TVertexInstanceAttributesRef<FVector3f> Normals = MeshAttributes.GetVertexInstanceNormals();
     TVertexInstanceAttributesRef<FVector2f> UVs = MeshAttributes.GetVertexInstanceUVs();
     TPolygonGroupAttributesRef<FName> PolygonGroupNames = MeshAttributes.GetPolygonGroupMaterialSlotNames();
 
-    // í´ë¦¬ê³¤ ê·¸ë£¹ ìƒì„±
+    // Æú¸®°ï ±×·ì »ı¼º
     FPolygonGroupID PolygonGroupID = MeshDesc->CreatePolygonGroup();
     PolygonGroupNames[PolygonGroupID] = FName("Default");
 
-    // ë²„í…ìŠ¤ ìœ„ì¹˜ì™€ ID ë§¤í•‘ -> ë²„í…ìŠ¤ ì¤‘ë³µ ìƒì„± ë°©ì§€ ë° ì¬ì‚¬ìš©
+    // ¹öÅØ½º À§Ä¡¿Í ID ¸ÅÇÎ -> ¹öÅØ½º Áßº¹ »ı¼º ¹æÁö ¹× Àç»ç¿ë
     TMap<FVector, FVertexID> VertexPositionToIDMap;
 
-    // ì—£ì§€ ì¶”ì ì„ ìœ„í•œ ë§µ ì¶”ê°€
+    // ¿§Áö ÃßÀûÀ» À§ÇÑ ¸Ê Ãß°¡
     TSet<TPair<FVertexID, FVertexID>> ExistingEdges;
 
-    // í´ë¦¬ê³¤ë³„ë¡œ ë©”ì‹œ ìƒì„±
+    // Æú¸®°ïº°·Î ¸Ş½Ã »ı¼º
     for (const FITDPolygon& PolygonData : Parser->GetPolygons()) 
     {
 
@@ -82,36 +82,36 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
         for (const FITDVertex& VertexData : PolygonData.Vertices) 
         {
 
-            // ë²„í…ìŠ¤ ìƒì„±
+            // ¹öÅØ½º »ı¼º
             FVertexID VertexID;
 
             if (VertexPositionToIDMap.Contains(VertexData.Position))
             {
-                // ì´ë¯¸ ìƒì„±ëœ ë²„í…ìŠ¤ ì¬ì‚¬ìš©
+                // ÀÌ¹Ì »ı¼ºµÈ ¹öÅØ½º Àç»ç¿ë
                 VertexID = VertexPositionToIDMap[VertexData.Position];
             }
             else
             {
-                // ë²„í…ìŠ¤ ìƒì„±
+                // ¹öÅØ½º »ı¼º
                 VertexID = MeshDesc->CreateVertex();
                 VertexPositions[VertexID] = FVector3f(VertexData.Position);
                 VertexPositionToIDMap.Add(VertexData.Position, VertexID);
             }
 
-            // ë²„í…ìŠ¤ ì¸ìŠ¤í„´ìŠ¤ ìƒì„±
+            // ¹öÅØ½º ÀÎ½ºÅÏ½º »ı¼º
             FVertexInstanceID VertexInstanceID = MeshDesc->CreateVertexInstance(VertexID);
 
-            // ë…¸ë©€ ì„¤ì •
+            // ³ë¸Ö ¼³Á¤
             if (VertexData.bHasNormal) 
             {
                 Normals[VertexInstanceID] = FVector3f(VertexData.Normal);
             }
             else 
             {
-                Normals[VertexInstanceID] = FVector3f(0.0f, 0.0f, 1.0f); // ê¸°ë³¸ê°’ ì„¤ì •
+                Normals[VertexInstanceID] = FVector3f(0.0f, 0.0f, 1.0f); // ±âº»°ª ¼³Á¤
             }
 
-            // UV ì„¤ì • (ìœ„ì¹˜ ê¸°ë°˜ì˜ ê°„ë‹¨í•œ UV ìƒì„±, [0,1] ë²”ìœ„ë¡œ ì •ê·œí™”)
+            // UV ¼³Á¤ (À§Ä¡ ±â¹İÀÇ °£´ÜÇÑ UV »ı¼º, [0,1] ¹üÀ§·Î Á¤±ÔÈ­)
             FVector2f UVCoordinate = FVector2f(
                 FMath::Fmod(VertexData.Position.X, 1.0f),
                 FMath::Fmod(VertexData.Position.Y, 1.0f)
@@ -124,7 +124,7 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
         //UE_LOG(LogTemp, Warning, TEXT("vertex instance num by polygon : %d"), VertexInstanceIDs.Num());
         if (VertexInstanceIDs.Num() >= 3)
         {
-            // ì—£ì§€ ì¤‘ë³µ ê²€ì‚¬
+            // ¿§Áö Áßº¹ °Ë»ç
             bool bHasDuplicateEdge = false;
             int32 NumVertices = VertexInstanceIDs.Num();
 
@@ -133,7 +133,7 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
                 FVertexID VertexID0 = MeshDesc->GetVertexInstanceVertex(VertexInstanceIDs[i]);
                 FVertexID VertexID1 = MeshDesc->GetVertexInstanceVertex(VertexInstanceIDs[(i + 1) % NumVertices]);
 
-                // ì—£ì§€ì˜ ë²„í…ìŠ¤ IDë¥¼ ì •ë ¬í•˜ì—¬ ì¤‘ë³µ ê²€ì‚¬ë¥¼ ì¼ê´€ë˜ê²Œ í•¨
+                // ¿§ÁöÀÇ ¹öÅØ½º ID¸¦ Á¤·ÄÇÏ¿© Áßº¹ °Ë»ç¸¦ ÀÏ°üµÇ°Ô ÇÔ
                 TPair<FVertexID, FVertexID> EdgeKey = TPair<FVertexID, FVertexID>(
                     FMath::Min(VertexID0, VertexID1),
                     FMath::Max(VertexID0, VertexID1)
@@ -154,10 +154,10 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
 	    if (bHasDuplicateEdge)
 	    {
                 UE_LOG(LogTemp, Error, TEXT("Cannot create polygon due to duplicate edges."));
-                continue; // ë‹¤ìŒ í´ë¦¬ê³¤ìœ¼ë¡œ ë„˜ì–´ê°
+                continue; // ´ÙÀ½ Æú¸®°ïÀ¸·Î ³Ñ¾î°¨
 	    }
             
-	    // í´ë¦¬ê³¤ ìƒì„±
+	    // Æú¸®°ï »ı¼º
 	    MeshDesc->CreatePolygon(PolygonGroupID, VertexInstanceIDs);
         }
         else
@@ -168,7 +168,7 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
 
     }
 
-    // ë©”ì‹œ ë°ì´í„°ì˜ ìœ íš¨ì„± ìˆ˜ë™ ê²€ì‚¬
+    // ¸Ş½Ã µ¥ÀÌÅÍÀÇ À¯È¿¼º ¼öµ¿ °Ë»ç
     if (MeshDesc->Vertices().Num() == 0)
     {
         UE_LOG(LogTemp, Error, TEXT("MeshDescription have not vertex"));
@@ -177,7 +177,7 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
 
     if (MeshDesc->Polygons().Num() == 0)
     {
-        UE_LOG(LogTemp, Error, TEXT("MeshDescriptionì— have not polygon"));
+        UE_LOG(LogTemp, Error, TEXT("MeshDescription¿¡ have not polygon"));
         return nullptr;
     }
 
@@ -192,7 +192,7 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
     }
 
     
-    // ë…¸ë©€ê³¼ íƒ„ì  íŠ¸ ê³„ì‚°
+    // ³ë¸Ö°ú ÅºÁ¨Æ® °è»ê
     FStaticMeshOperations::ComputeTangentsAndNormals(
         *MeshDesc,
 	EComputeNTBsFlags::Normals | 
@@ -203,11 +203,11 @@ UStaticMesh* UITDImporter::ImportITD(const FString& FilePath, const FString& Mes
 
     StaticMesh->CommitMeshDescription(0);
 
-    // StaticMesh ë¹Œë“œ
+    // StaticMesh ºôµå
     StaticMesh->Build(false);
     StaticMesh->MarkPackageDirty();
 
-    // ì—ì…‹ ë“±ë¡
+    // ¿¡¼Â µî·Ï
     FAssetRegistryModule::AssetCreated(StaticMesh);
 
     Parser = nullptr;
