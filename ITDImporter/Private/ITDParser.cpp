@@ -25,14 +25,15 @@ bool UITDParser::ParseFile(const FString& FilePath) {
     return true;
 }
 
-// Lines ¹è¿­À» »ç¿ëÇÏ¿© Polygons µ¥ÀÌÅÍ ±¸¼º
+// Lines ë°°ì—´ì„ ì‚¬ìš©í•˜ì—¬ Polygons ë°ì´í„° êµ¬ì„±
 void UITDParser::ParseLines(const TArray<FString>& Lines) {
     int32 LineIndex = 0;
     while (LineIndex < Lines.Num()) {
         FString Line = Lines[LineIndex].TrimStartAndEnd();
 
-        if (Line.StartsWith(TEXT("POLYGON"))) {
+        if (Line.StartsWith(TEXT("[POLYGON"))) {
             ParsePolygon(Lines, LineIndex);
+            UE_LOG(LogTemp, Warning, TEXT("**********************StartPasing Polygon******************"));
         }
         else {
             LineIndex++;
@@ -41,13 +42,13 @@ void UITDParser::ParseLines(const TArray<FString>& Lines) {
 }
 
 void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
-    // POLYGON ¶óÀÎ ÆÄ½Ì
+    // POLYGON ë¼ì¸ íŒŒì‹±
     FString Line = Lines[LineIndex].TrimStartAndEnd();
 
     FITDPolygon NewPolygon;
 
-    // ¹öÅØ½º ¼ö ¹× PLANE ÆÄ½Ì
-    // ¿¹: "POLYGON [PLANE 0 0 1 -0.006485] 3"
+    // ë²„í…ìŠ¤ ìˆ˜ ë° PLANE íŒŒì‹±
+    // ì˜ˆ: "POLYGON [PLANE 0 0 1 -0.006485] 3"
     TArray<FString> Tokens;
     Line.ParseIntoArrayWS(Tokens);
 
@@ -59,34 +60,37 @@ void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
         int32 PlaneEndIndex = Line.Find(TEXT("]"), ESearchCase::IgnoreCase, ESearchDir::FromStart, PlaneStartIndex);
         if (PlaneEndIndex != INDEX_NONE)
         {
-	    // PLANE ÆÄ½Ì
+	    // PLANE íŒŒì‹±
             FString PlaneData = Line.Mid(PlaneStartIndex + 1, PlaneEndIndex - PlaneStartIndex - 1);
             PlaneData.RemoveFromStart(TEXT("PLANE "));
             TArray<FString> PlaneComponents;
             PlaneData.ParseIntoArrayWS(PlaneComponents);;
 
-	    // Æò¸é µ¥ÀÌÅÍ ÆÄ½Ì
+	    // í‰ë©´ ë°ì´í„° íŒŒì‹±
             if (PlaneComponents.Num() == 4) {
                 NewPolygon.PlaneNormal.X = FCString::Atod(*PlaneComponents[0]);
                 NewPolygon.PlaneNormal.Y = FCString::Atod(*PlaneComponents[1]);
                 NewPolygon.PlaneNormal.Z = FCString::Atod(*PlaneComponents[2]);
                 NewPolygon.PlaneDistance = FCString::Atod(*PlaneComponents[3]);
                 NewPolygon.bHasPlane = true;
+
+                
             }
-	    // Æò¸é µ¥ÀÌÅÍ°¡ 4°³°¡ ¾Æ´Ñ °æ¿ì °æ°í Ãâ·Â
+	    // í‰ë©´ ë°ì´í„°ê°€ 4ê°œê°€ ì•„ë‹Œ ê²½ìš° ê²½ê³  ì¶œë ¥
             else
             {
                 UE_LOG(LogTemp, Warning, TEXT("Invalid plane data: %s"), *PlaneData);
             }
         }
-	// Æò¸é µ¥ÀÌÅÍÀÇ ³¡À» Ã£Áö ¸øÇÑ °æ¿ì °æ°í Ãâ·Â
+	// í‰ë©´ ë°ì´í„°ì˜ ëì„ ì°¾ì§€ ëª»í•œ ê²½ìš° ê²½ê³  ì¶œë ¥
         else
         {
             UE_LOG(LogTemp, Warning, TEXT("Failed to find end of plane data: %s"), *Line);
+            NewPolygon.bHasPlane = false;
         }
     }
 
-    // ¹öÅØ½º ¼ö ÆÄ½Ì (¸¶Áö¸· ÅäÅ«)
+    // ë²„í…ìŠ¤ ìˆ˜ íŒŒì‹± (ë§ˆì§€ë§‰ í† í°)
     if (Tokens.Num() >= 2) {
         FString LastToken = Tokens.Last();
         VertexCount = FCString::Atoi(*LastToken);
@@ -97,9 +101,9 @@ void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
         return;
     }
 
-    LineIndex++; // ´ÙÀ½ ¶óÀÎÀ¸·Î ÀÌµ¿
+    LineIndex++; // ë‹¤ìŒ ë¼ì¸ìœ¼ë¡œ ì´ë™
 
-    // ¹öÅØ½º ÆÄ½Ì
+    // ë²„í…ìŠ¤ íŒŒì‹±
     for (int32 i = 0; i < VertexCount; ++i) {
         if (LineIndex >= Lines.Num()) {
             UE_LOG(LogTemp, Warning, TEXT("Expected more lines for vertices, but reached end of file."));
@@ -112,20 +116,21 @@ void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
         FITDVertex NewVertex;
 
         if (Line.StartsWith(TEXT("[[NORMAL"))) {
-            // ³ë¸Ö°ú À§Ä¡ ÁÂÇ¥ ÆÄ½Ì
-            // ¿¹: "[[NORMAL nx ny nz] x y z]"
-            FString Content = Line.Mid(2, Line.Len() - 3); // Ã³À½ÀÇ "[["¿Í ³¡ÀÇ "]" Á¦°Å
+            // ë…¸ë©€ê³¼ ìœ„ì¹˜ ì¢Œí‘œ íŒŒì‹±
+            // ì˜ˆ: "[[NORMAL nx ny nz] x y z]"
+            UE_LOG(LogTemp, Log, TEXT("Vertex with normal detected."));
+            FString Content = Line.Mid(2, Line.Len() - 3); // ì²˜ìŒì˜ "[["ì™€ ëì˜ "]" ì œê±°
             TArray<FString> VertexTokens;
             Content.ParseIntoArrayWS(VertexTokens);
 
             if (VertexTokens.Num() >= 7 && VertexTokens[0] == TEXT("NORMAL")) {
-                // ³ë¸Ö ÆÄ½Ì
+                // ë…¸ë©€ íŒŒì‹±
                 NewVertex.Normal.X = FCString::Atod(*VertexTokens[1]);
                 NewVertex.Normal.Y = FCString::Atod(*VertexTokens[2]);
                 NewVertex.Normal.Z = FCString::Atod(*VertexTokens[3]);
                 NewVertex.bHasNormal = true;
 
-                // À§Ä¡ ÁÂÇ¥ ÆÄ½Ì
+                // ìœ„ì¹˜ ì¢Œí‘œ íŒŒì‹±
                 NewVertex.Position.X = FCString::Atod(*VertexTokens[4]);
                 NewVertex.Position.Y = FCString::Atod(*VertexTokens[5]);
                 NewVertex.Position.Z = FCString::Atod(*VertexTokens[6]);
@@ -135,13 +140,13 @@ void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
             }
         }
         else if (Line.StartsWith(TEXT("[")) && Line.EndsWith(TEXT("]"))) {
-            // À§Ä¡ ÁÂÇ¥¸¸ ÀÖ´Â °æ¿ì
-            FString Content = Line.Mid(2, Line.Len() - 4); // "["¿Í "]" Á¦°Å
+            // ìœ„ì¹˜ ì¢Œí‘œë§Œ ìˆëŠ” ê²½ìš°
+            FString Content = Line.Mid(2, Line.Len() - 4); // "["ì™€ "]" ì œê±°
             TArray<FString> VertexTokens;
             Content.ParseIntoArrayWS(VertexTokens);
 
             if (VertexTokens.Num() >= 3) {
-                // À§Ä¡ ÁÂÇ¥ ÆÄ½Ì
+                // ìœ„ì¹˜ ì¢Œí‘œ íŒŒì‹±
                 NewVertex.Position.X = FCString::Atod(*VertexTokens[0]);
                 NewVertex.Position.Y = FCString::Atod(*VertexTokens[1]);
                 NewVertex.Position.Z = FCString::Atod(*VertexTokens[2]);
@@ -152,6 +157,14 @@ void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
         }
         else {
             UE_LOG(LogTemp, Warning, TEXT("Unknown vertex format: %s"), *Line);
+            LineIndex++;
+            i--; // ë²„í…ìŠ¤ ìˆ˜ë¥¼ ë§ì¶”ê¸° ìœ„í•´ ì¸ë±ìŠ¤ ê°ì†Œ
+            continue;
+        }
+        // íŒŒì‹±ëœ ë²„í…ìŠ¤ ì •ë³´ ì¶œë ¥
+        UE_LOG(LogTemp, Warning, TEXT("Parsed Vertex Position: (%f, %f, %f)"), NewVertex.Position.X, NewVertex.Position.Y, NewVertex.Position.Z);
+        if (NewVertex.bHasNormal) {
+            UE_LOG(LogTemp, Warning, TEXT("Parsed Vertex Normal: (%f, %f, %f)"), NewVertex.Normal.X, NewVertex.Normal.Y, NewVertex.Normal.Z);
         }
 
         NewPolygon.Vertices.Add(NewVertex);
@@ -159,7 +172,7 @@ void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
         LineIndex++;
     }
 
-    // Æú¸®°ï Ãß°¡
+    // í´ë¦¬ê³¤ ì¶”ê°€
     if (NewPolygon.Vertices.Num() > 0) {
         Polygons.Add(NewPolygon);
         UE_LOG(LogTemp, Warning, TEXT("Added Polygon with %d vertices"), NewPolygon.Vertices.Num());
@@ -168,11 +181,11 @@ void UITDParser::ParsePolygon(const TArray<FString>& Lines, int32& LineIndex) {
         UE_LOG(LogTemp, Warning, TEXT("Polygon has no vertices and will not be added."));
     }
 
-    // POLYGON ºí·ÏÀÇ ³¡±îÁö ÀÌµ¿ (¿¹: "]")
+    // POLYGON ë¸”ë¡ì˜ ëê¹Œì§€ ì´ë™ (ì˜ˆ: "]")
     while (LineIndex < Lines.Num()) {
         Line = Lines[LineIndex].TrimStartAndEnd();
         if (Line == TEXT("]")) {
-            LineIndex++; // "]" ½ºÅµ
+            LineIndex++; // "]" ìŠ¤í‚µ
             break;
         }
         else {
