@@ -1,92 +1,144 @@
-# Unreal Engine 5 ITD Parser 🛠️
+# Unreal Engine 5 ITD Parser Plugin
 
-> **Purpose**   
-> Import and render **`.itd` (Industrial 3D Printing)** files natively inside **Unreal Engine 5**.  
-> The plug-in parses vertex / normal / polygon data, converts it to `UStaticMesh`, and resolves _Non-Manifold_ issues while keeping the engine’s **Manifold-oriented** philosophy.
+## 📋 프로젝트 개요
+**개발 기간**: 2024.08 ~ 2024.12  
+**개발 인원**: 1인 개발  
+**목표**: 3D 프린팅용 ITD 파일을 언리얼 엔진 5에서 직접 임포트할 수 있는 플러그인 개발
 
----
+## 🎯 현재 구현 상태
+- ✅ **ITD 파일 파싱**: 정점, 법선, 폴리곤 데이터 구조 설계 완료
+- ✅ **언리얼 엔진 팩토리 시스템**: 커스텀 임포터 기본 구조 구현
+- ✅ **Non-Manifold 문제 인식**: 게임 엔진 설계 철학과 충돌하는 구조적 문제 분석
+- 🔄 **현재 작업 중**: 실제 파싱 로직 및 Static Mesh 변환 구현 진행
 
-## ✨ Key Features
-| Feature | Details |
-|---------|---------|
-| **Custom Importer & Factory** | Extends UE5 asset pipeline (`UFactory`, `FAssetImportData`) to recognise `.itd` files. |
-| **Mesh Builder Integration** | Generates `FRawMesh` → `UStaticMesh`; reorders edges to avoid Non-Manifold crashes. |
-| **Performance Optimisation** | Internal pruning reduced redundant build steps by **29 %**, lowering import time. |
-| **Diagnostic Viewer** | Optional debug flag draws parsed polygons in-editor for quick validation. |
+## 🛠️ 기술 스택
+- **언어**: C++
+- **엔진**: Unreal Engine 5.2/5.3
+- **개발환경**: Visual Studio 2022
+- **핵심 기술**: UFactory 확장, File Format Parsing, Geometry Processing
 
----
+## 🔧 구현된 핵심 구조
 
-## 🚀 Quick Start
+### 1. ITD 데이터 구조 설계
+```cpp
+// ITDParser.h - 파싱된 데이터를 위한 구조체 정의
+USTRUCT()
+struct FITDVertex {
+    GENERATED_BODY()
+    FVector Position;
+    FVector Normal;
+    bool bHasNormal = false;
+};
 
-```bash
-# 1) Clone to YourProject/Plugins
-git clone https://github.com/FrogRim/UE5-ITD-Parser.git Plugins/ITDParser
-
-# 2) Generate project files & build (VS2022, Win64 Development Editor)
-./GenerateProjectFiles.bat
-cmake --build . --config Development --target UE5Editor
-
-# 3) Enable the plug-in inside Edit ▸ Plugins ▸ Importers
-# 4) Re-start the editor and drag-drop a .itd file into the Content Browser
-````
-
-> **Note:** Engine source build tested on **UE 5.2 / 5.3** with Visual Studio 2022.
-
----
-
-## 🏗️ Project Structure
-
-```
-ITDImporter/
- ├─ Factories/          # UFactory-derived classes
- ├─ Parsers/            # Binary reader for .itd chunks
- ├─ MeshBuilder/        # FRawMesh assembly + Non-Manifold fix
- └─ Tests/              # Unit tests (GTest)
-Resources/              # Sample .itd models
-Docs/                   # Additional build guides (KR/EN)
+USTRUCT()
+struct FITDPolygon {
+    GENERATED_BODY()
+    TArray<FITDVertex> Vertices;
+    FVector PlaneNormal;
+    float PlaneDistance;
+    bool bHasPlane = false;
+};
 ```
 
----
+### 2. 언리얼 엔진 팩토리 시스템 확장
+```cpp
+// ITDFactory.h - 커스텀 임포터 구현
+UCLASS()
+class ITDIMPORTER_API UITDFactory : public UFactory {
+    GENERATED_BODY()
+public:
+    UITDFactory();
+    virtual UObject* FactoryCreateFile(UClass* InClass, UObject* InParent, 
+        FName InName, EObjectFlags Flags, const FString& Filename, 
+        const TCHAR* Parms, FFeedbackContext* Warn, 
+        bool& bOutOperationCanceled) override;
+};
+```
 
-## 📊 Performance Snapshot
+## 🎮 실무 연계성
 
-| Scene           | Triangles | Import Time (before) | Import Time (after) | Δ      |
-| --------------- | --------- | -------------------- | ------------------- | ------ |
-| Industrial Pump | 1.2 M     | **12.6 s**           | **9.0 s**           | ▼ 29 % |
-| Pipe Array      | 850 k     | 8.3 s                | 6.1 s               | ▼ 26 % |
+### 3D 콘텐츠 파이프라인 확장
+- **다양한 파일 포맷 지원**: 언리얼 엔진의 임포트 기능 확장
+- **커스텀 데이터 처리**: 기존에 지원하지 않는 포맷의 처리 경험
+- **플러그인 아키텍처**: 엔진 확장성을 고려한 모듈 설계
 
-> *Non-Manifold edge fix eliminated 100 % of previous crash cases on these models.*
+### 실무 활용 시나리오
+- **건축/제조업 시각화**: CAD 데이터를 실시간 3D 환경으로 직접 변환
+- **3D 프린팅 업계 연동**: 설계 데이터를 즉시 시각화하여 검토 프로세스 단축
+- **디지털 트윈**: 실제 제조 데이터를 가상 환경에서 실시간 시뮬레이션
+- **교육/훈련 도구**: 복잡한 기계 구조를 인터랙티브하게 학습할 수 있는 환경 제공
 
----
+### 엔진 내부 구조 이해
+- **UFactory 시스템**: 언리얼 엔진의 에셋 임포트 파이프라인 이해
+- **USTRUCT/UCLASS**: 언리얼 엔진 리플렉션 시스템 활용
+- **Static Mesh 생성**: 런타임 지오메트리 생성 프로세스 학습
+- **메모리 관리**: 대용량 3D 데이터의 효율적 처리 방법 연구
 
-## 🧩 How It Works
+## 🐛 기술적 도전과 학습
 
-1. **Byte-level Parser** scans `.itd` header → vertex / normal / face blocks.
-2. **Topology Validator** reorders edges, splits Non-Manifold vertices when necessary.
-3. **Mesh Builder** feeds `FStaticMeshOperations::BuildStaticMesh` with clean data.
-4. **Asset Registry** registers the new `UStaticMesh` for immediate use in editor or runtime.
+### Non-Manifold 문제 분석 및 해결 시도
+**발견한 문제**: ITD 파일의 일부 구조가 언리얼 엔진에서 요구하는 Manifold 조건을 만족하지 않음
 
----
+**원인 분석**: 
+- 게임 엔진은 실시간 렌더링 최적화를 위해 Manifold 구조를 선호
+- 3D 프린팅용 데이터는 제조 목적으로 설계되어 렌더링 최적화와 다른 우선순위
+- 동일한 에지를 3개 이상의 면이 공유하는 Non-Manifold 구조가 ITD 파일에 존재
 
-## 🔭 Roadmap
+**구체적 해결 방안 연구**:
+1. **에지 분할 알고리즘**: Non-Manifold 에지를 감지하여 인접 면별로 별도 정점 생성
+2. **면 재구성**: 복잡한 교차 구조를 단순한 삼각형 메시로 분해
+3. **데이터 검증**: 임포트 전 Manifold 여부 사전 검사 및 경고 시스템
+4. **사용자 옵션**: 자동 수정 vs 원본 유지 선택 기능 설계
 
-* [ ] **Material table** support (diffuse / roughness from .itd metadata)
-* [ ] **Async import** to minimise editor hitching
-* [ ] Prototype **Neural Super-Resolution** pass (ESRGAN) for large CAD scenes
+**실무 적용 가치**: 
+- CAD 데이터를 게임 엔진으로 가져오는 실무 상황에서 빈번히 발생하는 문제
+- 건축 시각화, 제품 프레젠테이션 등에서 직접적으로 활용 가능한 기술
 
----
+## 📚 학습 성과
 
-## 📝 Build Notes & Troubleshooting
+### 언리얼 엔진 전문성
+- **플러그인 개발**: 엔진 확장을 위한 C++ 프로그래밍
+- **에셋 파이프라인**: 임포트 시스템의 내부 동작 원리 이해
+- **지오메트리 처리**: 3D 데이터 구조와 변환 과정 학습
 
-| Issue                                | Fix                                                                                              |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `MSB3073 code 6` during engine build | Run **VS Developer Prompt** as admin and execute `Build.bat` manually to reveal missing SDKs.    |
-| Editor crash on import               | Ensure “Enable Nanite” is disabled for > 50 M triangle raw meshes until Nanite support is added. |
-| Corrupted normals                    | Toggle **Recalculate Normals** in plug-in settings; some legacy .itd files omit normal vectors.  |
+### 문제 해결 능력
+- **구조적 사고**: 파일 포맷과 엔진 요구사항 간의 불일치 분석
+- **점진적 개발**: 기본 구조부터 단계적으로 기능 확장
+- **기술 문서 분석**: 언리얼 엔진 공식 문서 및 소스코드 분석 능력
 
----
+## 🔄 현재 진행 상황
 
-MIT License © 2024 Lee Kang-Rim
+### 완료된 작업
+1. **기본 프로젝트 구조** 설정 및 플러그인 템플릿 생성
+2. **데이터 구조 설계** - ITD 파일 형식에 맞는 구조체 정의
+3. **Factory 클래스** 기본 틀 구현
 
+### 진행 중인 작업
+1. **실제 파싱 로직** 구현 (ParseFile 메소드)
+2. **Static Mesh 생성** 코드 작성
+3. **에러 처리** 및 유효성 검사 로직
 
+### 향후 계획
+1. **Non-Manifold 처리** 알고리즘 구현
+2. **성능 최적화** 및 메모리 관리
+3. **사용자 편의 기능** 추가 (프리뷰, 옵션 설정 등)
 
+## 🌟 프로젝트의 가치
+
+### 실무 적용 가능성
+- **엔진 확장 경험**: 기존 도구의 한계를 극복하는 개발 능력
+- **파일 포맷 처리**: 다양한 데이터 형식을 다루는 범용성
+- **최적화 관점**: 실시간 렌더링을 고려한 데이터 변환 이해
+
+### 지속적 학습 자세
+- **문제 중심 접근**: 기술적 한계에 부딪혔을 때 포기하지 않고 원인 분석
+- **체계적 개발**: 기본 구조부터 차근차근 구현하는 개발 방법론
+- **실무 연계 사고**: 개발한 기술이 실제 업무에 어떻게 활용될지 고민
+
+## 🔗 참고 자료
+- **GitHub Repository**: https://github.com/FrogRim/UE5-ITD-Parser
+- **기술 문서**: ITD 파일 포맷 분석 및 구현 과정 기록
+- **언리얼 엔진 공식 문서**: Custom Asset Import 가이드 참조
+
+## 💡 프로젝트 의의
+이 프로젝트는 **완성된 제품보다는 학습과 문제 해결 과정에 중점**을 둔 개발 경험입니다. 언리얼 엔진의 내부 구조를 이해하고, 실제 업무에서 마주할 수 있는 기술적 제약과 해결 방법을 탐구하는 과정에서 **실무 개발자로서의 사고방식과 접근법**을 기를 수 있었습니다.
