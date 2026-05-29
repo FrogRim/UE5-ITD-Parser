@@ -1,27 +1,38 @@
-# Unreal Engine 5 ITD Parser Plugin
+# UE5 ITD Parser Plugin
 
-## 📋 프로젝트 개요
-**개발 기간**: 2024.08 ~ 2024.12  
-**개발 인원**: 1인 개발  
-**목표**: 3D 프린팅용 ITD 파일을 언리얼 엔진 5에서 직접 임포트할 수 있는 플러그인 개발
+3D 프린팅용 ITD 파일을 Unreal Engine 5에서 읽기 위한 UFactory 기반 커스텀 임포터 플러그인 프로젝트입니다.
 
-## 🎯 현재 구현 상태
-- ✅ **ITD 파일 파싱**: 정점, 법선, 폴리곤 데이터 구조 설계 완료
-- ✅ **언리얼 엔진 팩토리 시스템**: 커스텀 임포터 기본 구조 구현
-- ✅ **Non-Manifold 문제 인식**: 게임 엔진 설계 철학과 충돌하는 구조적 문제 분석
-- 🔄 **현재 작업 중**: 실제 파싱 로직 및 Static Mesh 변환 구현 진행
+> Portfolio position: Unreal Engine tooling, file-format parsing, geometry pipeline analysis.
 
-## 🛠️ 기술 스택
-- **언어**: C++
-- **엔진**: Unreal Engine 5.2/5.3
-- **개발환경**: Visual Studio 2022
-- **핵심 기술**: UFactory 확장, File Format Parsing, Geometry Processing
+## Problem
 
-## 🔧 구현된 핵심 구조
+3D 프린팅/CAD 계열 데이터는 게임 엔진의 실시간 렌더링 파이프라인과 요구사항이 다릅니다. 특히 ITD 파일의 일부 구조는 Unreal Engine의 Static Mesh 변환 흐름과 충돌할 수 있고, Non-Manifold geometry 문제를 사전에 분석해야 합니다.
 
-### 1. ITD 데이터 구조 설계
+## What I Built
+
+- ITD file parsing을 위한 vertex/polygon data structures
+- Unreal Engine 5 `UFactory` 기반 custom asset importer skeleton
+- Static Mesh 변환 흐름 분석
+- ITD geometry와 UE mesh requirements 간 불일치 정리
+- Non-Manifold edge case와 처리 전략 문서화
+
+## My Role
+
+개인 프로젝트로 파일 포맷 분석, C++ 구조체 설계, UFactory importer 골격 구현, 엔진 임포트 파이프라인 학습과 문제 분석을 수행했습니다. 완성 제품보다 “엔진이 요구하는 데이터 계약과 외부 파일 포맷의 차이를 어떻게 줄일지”를 탐구한 프로젝트입니다.
+
+## Stack
+
+| Area | Stack |
+| --- | --- |
+| Engine | Unreal Engine 5.2 / 5.3 |
+| Language | C++ |
+| Engine extension | UFactory, UCLASS, USTRUCT |
+| Geometry | Static Mesh pipeline, file format parsing, Non-Manifold analysis |
+| IDE | Visual Studio 2022 |
+
+## Core Structure
+
 ```cpp
-// ITDParser.h - 파싱된 데이터를 위한 구조체 정의
 USTRUCT()
 struct FITDVertex {
     GENERATED_BODY()
@@ -40,105 +51,46 @@ struct FITDPolygon {
 };
 ```
 
-### 2. 언리얼 엔진 팩토리 시스템 확장
 ```cpp
-// ITDFactory.h - 커스텀 임포터 구현
 UCLASS()
 class ITDIMPORTER_API UITDFactory : public UFactory {
     GENERATED_BODY()
 public:
-    UITDFactory();
-    virtual UObject* FactoryCreateFile(UClass* InClass, UObject* InParent, 
-        FName InName, EObjectFlags Flags, const FString& Filename, 
-        const TCHAR* Parms, FFeedbackContext* Warn, 
-        bool& bOutOperationCanceled) override;
+    virtual UObject* FactoryCreateFile(
+        UClass* InClass,
+        UObject* InParent,
+        FName InName,
+        EObjectFlags Flags,
+        const FString& Filename,
+        const TCHAR* Parms,
+        FFeedbackContext* Warn,
+        bool& bOutOperationCanceled
+    ) override;
 };
 ```
 
-## 🎮 실무 연계성
+## Run / Build
 
-### 3D 콘텐츠 파이프라인 확장
-- **다양한 파일 포맷 지원**: 언리얼 엔진의 임포트 기능 확장
-- **커스텀 데이터 처리**: 기존에 지원하지 않는 포맷의 처리 경험
-- **플러그인 아키텍처**: 엔진 확장성을 고려한 모듈 설계
+1. Create or open a UE5 C++ project.
+2. Place this plugin under the project `Plugins/` directory.
+3. Regenerate Visual Studio project files.
+4. Build the editor target in Visual Studio 2022.
+5. Enable the plugin in Unreal Editor and test ITD import flow.
 
-### 실무 활용 시나리오
-- **건축/제조업 시각화**: CAD 데이터를 실시간 3D 환경으로 직접 변환
-- **3D 프린팅 업계 연동**: 설계 데이터를 즉시 시각화하여 검토 프로세스 단축
-- **디지털 트윈**: 실제 제조 데이터를 가상 환경에서 실시간 시뮬레이션
-- **교육/훈련 도구**: 복잡한 기계 구조를 인터랙티브하게 학습할 수 있는 환경 제공
+## Validation Evidence
 
-### 엔진 내부 구조 이해
-- **UFactory 시스템**: 언리얼 엔진의 에셋 임포트 파이프라인 이해
-- **USTRUCT/UCLASS**: 언리얼 엔진 리플렉션 시스템 활용
-- **Static Mesh 생성**: 런타임 지오메트리 생성 프로세스 학습
-- **메모리 관리**: 대용량 3D 데이터의 효율적 처리 방법 연구
+| Area | Evidence |
+| --- | --- |
+| Import extension point | `UFactory` custom importer skeleton implemented |
+| Data modeling | ITD vertex/polygon structures defined for parser output |
+| Engine contract analysis | Static Mesh conversion requirements reviewed |
+| Geometry risk | Non-Manifold mismatch documented as a structural blocker |
+| Scope clarity | Prototype/tooling project, not a production-ready importer |
 
-## 🐛 기술적 도전과 학습
+## Non-Manifold Finding
 
-### Non-Manifold 문제 분석 및 해결 시도
-**발견한 문제**: ITD 파일의 일부 구조가 언리얼 엔진에서 요구하는 Manifold 조건을 만족하지 않음
+ITD data can contain geometry that does not satisfy the manifold assumptions preferred by realtime rendering pipelines. The project documents possible mitigation paths: edge splitting, face reconstruction, pre-import validation, and user-selectable repair vs preserve options.
 
-**원인 분석**: 
-- 게임 엔진은 실시간 렌더링 최적화를 위해 Manifold 구조를 선호
-- 3D 프린팅용 데이터는 제조 목적으로 설계되어 렌더링 최적화와 다른 우선순위
-- 동일한 에지를 3개 이상의 면이 공유하는 Non-Manifold 구조가 ITD 파일에 존재
+## Status
 
-**구체적 해결 방안 연구**:
-1. **에지 분할 알고리즘**: Non-Manifold 에지를 감지하여 인접 면별로 별도 정점 생성
-2. **면 재구성**: 복잡한 교차 구조를 단순한 삼각형 메시로 분해
-3. **데이터 검증**: 임포트 전 Manifold 여부 사전 검사 및 경고 시스템
-4. **사용자 옵션**: 자동 수정 vs 원본 유지 선택 기능 설계
-
-**실무 적용 가치**: 
-- CAD 데이터를 게임 엔진으로 가져오는 실무 상황에서 빈번히 발생하는 문제
-- 건축 시각화, 제품 프레젠테이션 등에서 직접적으로 활용 가능한 기술
-
-## 📚 학습 성과
-
-### 언리얼 엔진 전문성
-- **플러그인 개발**: 엔진 확장을 위한 C++ 프로그래밍
-- **에셋 파이프라인**: 임포트 시스템의 내부 동작 원리 이해
-- **지오메트리 처리**: 3D 데이터 구조와 변환 과정 학습
-
-### 문제 해결 능력
-- **구조적 사고**: 파일 포맷과 엔진 요구사항 간의 불일치 분석
-- **점진적 개발**: 기본 구조부터 단계적으로 기능 확장
-- **기술 문서 분석**: 언리얼 엔진 공식 문서 및 소스코드 분석 능력
-
-## 🔄 현재 진행 상황
-
-### 완료된 작업
-1. **기본 프로젝트 구조** 설정 및 플러그인 템플릿 생성
-2. **데이터 구조 설계** - ITD 파일 형식에 맞는 구조체 정의
-3. **Factory 클래스** 기본 틀 구현
-
-### 진행 중인 작업
-1. **실제 파싱 로직** 구현 (ParseFile 메소드)
-2. **Static Mesh 생성** 코드 작성
-3. **에러 처리** 및 유효성 검사 로직
-
-### 향후 계획
-1. **Non-Manifold 처리** 알고리즘 구현
-2. **성능 최적화** 및 메모리 관리
-3. **사용자 편의 기능** 추가 (프리뷰, 옵션 설정 등)
-
-## 🌟 프로젝트의 가치
-
-### 실무 적용 가능성
-- **엔진 확장 경험**: 기존 도구의 한계를 극복하는 개발 능력
-- **파일 포맷 처리**: 다양한 데이터 형식을 다루는 범용성
-- **최적화 관점**: 실시간 렌더링을 고려한 데이터 변환 이해
-
-### 지속적 학습 자세
-- **문제 중심 접근**: 기술적 한계에 부딪혔을 때 포기하지 않고 원인 분석
-- **체계적 개발**: 기본 구조부터 차근차근 구현하는 개발 방법론
-- **실무 연계 사고**: 개발한 기술이 실제 업무에 어떻게 활용될지 고민
-
-## 🔗 참고 자료
-- **GitHub Repository**: https://github.com/FrogRim/UE5-ITD-Parser
-- **기술 문서**: ITD 파일 포맷 분석 및 구현 과정 기록
-- **언리얼 엔진 공식 문서**: Custom Asset Import 가이드 참조
-
-## 💡 프로젝트 의의
-이 프로젝트는 **완성된 제품보다는 학습과 문제 해결 과정에 중점**을 둔 개발 경험입니다. 언리얼 엔진의 내부 구조를 이해하고, 실제 업무에서 마주할 수 있는 기술적 제약과 해결 방법을 탐구하는 과정에서 **실무 개발자로서의 사고방식과 접근법**을 기를 수 있었습니다.
+Prototype / learning project. The repository is useful as evidence of Unreal Engine extension work, C++ plugin structure, and geometry-pipeline problem analysis.
